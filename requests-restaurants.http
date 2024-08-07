@@ -1,0 +1,90 @@
+### from here https://learn.microsoft.com/en-gb/azure/ai-services/openai/how-to/code-interpreter?tabs=rest
+### and here https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/assistant
+@resource = jolgukbootcampai
+@key = 1f31b7e0fca5460c97dd68b5b3fca65b
+@model = gpt-4
+
+### STEP 1 create an assistant
+# @name assistant
+POST https://{{resource}}.openai.azure.com/openai/assistants?api-version=2024-05-01-preview
+api-key: {{key}}
+Content-Type: application/json
+
+{
+    "instructions": "You are an AI assistant that can help people book restaurants.",
+    "tools": [
+      { "type": "code_interpreter" }
+    ],
+    "model": "{{model}}"
+}
+
+### get assistant id from response
+@assistant_id = {{assistant.response.body.id}}
+
+### STEP 2 create a thread
+# @name thread
+POST https://{{resource}}.openai.azure.com/openai/threads?api-version=2024-05-01-preview
+api-key: {{key}}
+
+### get the thread ID
+@thread_id = {{thread.response.body.id}}
+
+### STEP 3 - create a message. This is the ask of the assistant
+POST https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/messages?api-version=2024-05-01-preview
+api-key: {{key}}
+Content-Type: application/json
+
+{
+    "content": "Book me a restaurant in the Sale area of Manchester for 2 people on the 1st of September 2024 at 8pm",
+    "role": "user"
+}
+
+### STEP 4 run the thread
+# @name run
+POST https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/runs?api-version=2024-05-01-preview
+api-key: {{key}}
+
+{
+    "assistant_id": "{{assistant_id}}"
+}
+
+### get run ID
+@run_id = {{run.response.body.id}}
+
+### STEP 5 list messages after the run has executed
+# @name listmessages
+GET https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/messages?api-version=2024-05-01-preview
+api-key: {{key}}
+
+### get the response from the original question
+@response = {{listmessages.response.body.data.[1].content[0].text.value}}
+
+### STEP 6 delete the thread
+DELETE https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}?api-version=2024-05-01-preview
+api-key: {{key}}
+
+### STEP 7 delete the assistant
+DELETE https://{{resource}}.openai.azure.com/openai/assistants/{{assistant_id}}?api-version=2024-05-01-preview
+api-key: {{key}}
+
+### END OF STEPS
+
+### more run queries
+### list runs
+GET https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/runs?api-version=2024-05-01-preview
+api-key: {{key}}
+
+
+### list run steps
+GET https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/runs/{{run_id}}/steps?api-version=2024-05-01-preview
+api-key: {{key}}
+
+
+### retrieve the run
+GET https://{{resource}}.openai.azure.com/openai/threads/{{thread_id}}/runs/{{run_id}}?api-version=2024-05-01-preview
+api-key: {{key}}
+
+
+
+
+### END OF THREAD
